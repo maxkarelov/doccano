@@ -44,6 +44,7 @@ lockfile = "*"
 gunicorn = "*"
 fasteners = "*"
 auto-labeling-pipeline = "*"
+typing_extensions = "*"
 
 [requires]
 python_version = "3.8"
