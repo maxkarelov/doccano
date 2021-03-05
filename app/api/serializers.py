@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_polymorphic.serializers import PolymorphicSerializer
+from auto_labeling_pipeline.models import RequestModelFactory, CustomRESTRequestModel
 
 from .models import (AutoLabelingConfig, Comment, Document, DocumentAnnotation,
                      Label, Project, Role, RoleMapping, Seq2seqAnnotation,
@@ -267,8 +268,10 @@ class AutoLabelingConfigSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         try:
-            RequestModelFactory.create(data['model_name'], data['model_attrs'])
-        except Exception:
+            # RequestModelFactory.create(data['model_name'], data['model_attrs'])
+            CustomRESTRequestModel(url='http://spisok.com', method='GET')
+        except Exception as e:
+            print('@@@@@@', e)
             model = RequestModelFactory.find(data['model_name'])
             schema = model.schema()
             required_fields = ', '.join(schema['required']) if 'required' in schema else ''

@@ -394,8 +394,10 @@ class AutoLabelingConfig(models.Model):
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
         try:
-            RequestModelFactory.find(self.model_name)
+            pass
+            # RequestModelFactory.find(self.model_name)
         except NameError:
             raise ValidationError(f'The specified model name {self.model_name} does not exist.')
-        except Exception:
+        except Exception as e:
+            print('###', e)
             raise ValidationError('The attributes does not match the model.')

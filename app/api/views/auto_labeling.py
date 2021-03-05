@@ -2,7 +2,8 @@ import botocore.exceptions
 import requests
 from auto_labeling_pipeline.mappings import MappingTemplate
 from auto_labeling_pipeline.menu import Options
-from auto_labeling_pipeline.models import RequestModelFactory
+from auto_labeling_pipeline.models import RequestModelFactory, RequestModel #, CustomRESTRequestModel
+from pydantic import BaseModel, HttpUrl
 from auto_labeling_pipeline.pipeline import pipeline
 from auto_labeling_pipeline.postprocessing import PostProcessor
 from auto_labeling_pipeline.task import TaskFactory
@@ -102,6 +103,45 @@ class AutoLabelingConfigTest(APIView):
         )
 
 
+from typing import Dict, Optional, Type
+from typing_extensions import Literal
+
+def find_and_replace_value(obj, value, target='{{ text }}'):
+    for k, v in obj.items():
+        if v == target:
+            obj[k] = value
+            return
+        if isinstance(v, dict):
+            find_and_replace_value(v, value, target)
+class CustomRESTRequestModel(RequestModel):
+    """
+    This allow you to call any REST API.
+    """
+    url: str
+    method: Literal['GET', 'POST']
+    params: Optional[dict]
+    headers: Optional[dict]
+    body: Optional[dict]
+
+    class Config:
+        title = 'Custom REST Request'
+
+    def send(self, text: str):
+        # find_and_replace_value(self.body, text)
+        # find_and_replace_value(self.params, text)
+        find_and_replace_value({}, text)
+        find_and_replace_value({}, text)
+        response = requests.request(
+            url=self.url,
+            method=self.method,
+            params=self.params,
+            headers=self.headers,
+            json=self.body
+        ).json()
+        return response
+
+
+
 class AutoLabelingConfigParameterTest(APIView):
     permission_classes = [IsAuthenticated & IsProjectAdmin]
 
@@ -109,10 +149,15 @@ class AutoLabelingConfigParameterTest(APIView):
         model_name = self.request.data['model_name']
         model_attrs = self.request.data['model_attrs']
         sample_text = self.request.data['text']
+
+        print(model_name, model_attrs, sample_text)
+
         try:
             model = RequestModelFactory.create(model_name, model_attrs)
-        except Exception:
-            model = RequestModelFactory.find(model_name)
+        except Exception as e:
+
+            model = CustomRESTRequestModel(url='http://spisok.com', method='GET')
+
             schema = model.schema()
             required_fields = ', '.join(schema['required']) if 'required' in schema else ''
             raise ValidationError(
@@ -186,7 +231,9 @@ class AutoLabelingAnnotation(generics.CreateAPIView):
         if queryset.exists():
             raise AutoLabelingException()
         labels = self.extract()
+        print('labels 111', labels)
         labels = self.transform(labels)
+        print('labels 222', labels)
         serializer = self.get_serializer(data=labels, many=True)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -227,10 +274,13 @@ def execute_pipeline(text: str,
                      template: str,
                      label_mapping: dict):
     task = TaskFactory.create(project_type)
-    model = RequestModelFactory.create(
-        model_name=model_name,
-        attributes=model_attrs
-    )
+    # model = RequestModelFactory.create(
+    #     model_name=model_name,
+    #     attributes=model_attrs
+    # )
+
+    model = CustomRESTRequestModel(url='http://localhost:5000', method='GET')
+
     template = MappingTemplate(
         label_collection=task.label_collection,
         template=template
