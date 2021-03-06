@@ -9,9 +9,9 @@ services:
       - .:/src
       - venv:/root/.local/share
     environment:
-      ADMIN_USERNAME: "admin"
-      ADMIN_PASSWORD: "password"
-      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_USERNAME: "doccano"
+      ADMIN_PASSWORD: "doccano321"
+      ADMIN_EMAIL: "doccano@example.com"
       DATABASE_URL: "postgres://doccano:doccano@postgres:5432/doccano?sslmode=disable"
       ALLOW_SIGNUP: "False"
       DEBUG: "True"

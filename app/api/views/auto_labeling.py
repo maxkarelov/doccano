@@ -129,8 +129,14 @@ class CustomRESTRequestModel(RequestModel):
     def send(self, text: str):
         # find_and_replace_value(self.body, text)
         # find_and_replace_value(self.params, text)
-        find_and_replace_value({}, text)
-        find_and_replace_value({}, text)
+
+        # find_and_replace_value({}, text)
+        # find_and_replace_value({}, text)
+
+        self.params = {
+            'text': text
+        }
+
         response = requests.request(
             url=self.url,
             method=self.method,
